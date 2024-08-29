@@ -6,6 +6,7 @@ import {
   forwardRef,
   ReactNode,
   useCallback,
+  useRef,
   useState,
 } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
@@ -55,6 +56,7 @@ export default function FlipBook() {
   const [numPages, setNumPages] = useState<number>()
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null)
   const [containerWidth, setContainerWidth] = useState<number>()
+  const pageFlipRef = useRef(null)
 
   const onResize = useCallback<ResizeObserverCallback>((entries) => {
     const [entry] = entries
@@ -72,6 +74,15 @@ export default function FlipBook() {
     setNumPages(nextNumPages)
   }
 
+  const turnToPage = (pageNum: number) => {
+    if (pageFlipRef.current) {
+      const pageFlip = pageFlipRef.current.getPageFlip()
+      if (pageFlip) {
+        pageFlip.turnToPage(pageNum)
+      }
+    }
+  }
+
   return (
     <div
       className="flex flex-col items-center justify-center h-screen overflow-hidden bg-stone-950 md:justify-center scroll-mx-2"
@@ -79,6 +90,7 @@ export default function FlipBook() {
     >
       {/* @ts-expect-error ignore HTMLFlipBook types */}
       <HTMLFlipBook
+        ref={pageFlipRef}
         width={750}
         height={418}
         className="z-50"
@@ -113,7 +125,13 @@ export default function FlipBook() {
           className="flex gap-2"
         >
           {Array.from(new Array(numPages), (_el, index) => (
-            <Page key={`page_${index + 1}`} pageNumber={index + 1} width={55} />
+            <Page
+              key={`page_${index + 1}`}
+              pageNumber={index + 1}
+              className="cursor-pointer"
+              width={55}
+              onClick={() => pageFlipRef.current.pageFlip().flip(index + 1)}
+            />
           ))}
         </Document>
       </div>
